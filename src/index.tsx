@@ -307,6 +307,7 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
   }
 
   private decayClock = new Clock()
+  private masterClock = new Clock()
   private panState = new Value(0)
   private tapState = new Value(0)
   private velocity = new Value(0)
@@ -370,7 +371,6 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
       this.clampingValue.setValue(snapPoints[snapPoints.length - 1])
     }
 
-    const masterClock = new Clock()
     const prevMasterDrag = new Value(0)
     const wasRun: Animated.Value<number> = new Value(0)
     this.translateMaster = block([
@@ -382,13 +382,13 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
         [
           set(prevMasterDrag, 0),
           cond(
-            or(clockRunning(masterClock), not(wasRun), this.isManuallySetValue),
+            or(clockRunning(this.masterClock), not(wasRun), this.isManuallySetValue),
             [
-              cond(this.isManuallySetValue, stopClock(masterClock)),
+              cond(this.isManuallySetValue, stopClock(this.masterClock)),
               set(
                 masterOffseted,
                 this.runSpring(
-                  masterClock,
+                  this.masterClock,
                   masterOffseted,
                   this.masterVelocity,
                   cond(
@@ -405,7 +405,7 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
           ),
         ],
         [
-          stopClock(masterClock),
+          stopClock(this.masterClock),
           set(this.preventDecaying, 1),
           set(
             masterOffseted,
@@ -825,6 +825,17 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
                 </TapGestureHandler>
               </Animated.View>
             </PanGestureHandler>
+            <Animated.Code
+              exec={onChange(
+                this.isManuallySetValue,
+                cond(
+                  eq(clockRunning(this.masterClock), 0),
+                  [
+                    startClock(this.masterClock)
+                  ]
+                )
+              )}
+            />
             <Animated.Code
               exec={onChange(
                 this.tapState,
