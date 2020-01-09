@@ -108,6 +108,7 @@ type Props = {
   onOpenEnd?: () => void
   onCloseStart?: () => void
   onCloseEnd?: () => void
+  onWillSnapTo?: (idx: number) => void
   callbackThreshold?: number
   borderRadius?: number
 }
@@ -486,14 +487,19 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
       toValue: new Value(0),
       ...this.props.springConfig,
     }
-
     return [
       cond(clockRunning(clock), 0, [
         set(state.finished, 0),
         set(state.velocity, velocity),
         set(state.position, value),
         set(config.toValue, dest),
-        cond(and(wasRun, not(isManuallySet)), 0, startClock(clock)),
+        cond(and(wasRun, not(isManuallySet)), 0, [
+          startClock(clock),
+          call([config.toValue, ...this.state.snapPoints], (v) => {
+            const [d, ...snapPoints] = v;
+            this.props.onWillSnapTo && this.props.onWillSnapTo(snapPoints.indexOf(d));
+          }),
+        ]),
         cond(defined(wasRun), set(wasRun, 1)),
       ]),
       spring(clock, state, config),
