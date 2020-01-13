@@ -1,5 +1,11 @@
 import * as React from 'react'
-import { Dimensions, Platform, View, LayoutChangeEvent } from 'react-native'
+import {
+  Dimensions,
+  Platform,
+  View,
+  LayoutChangeEvent,
+  ViewStyle,
+} from 'react-native'
 import Animated from 'react-native-reanimated'
 import {
   PanGestureHandler,
@@ -111,6 +117,7 @@ type Props = {
   onWillSnapTo?: (idx: number) => void
   callbackThreshold?: number
   borderRadius?: number
+  containerStyle: ViewStyle
 }
 
 type State = {
@@ -383,7 +390,11 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
         [
           set(prevMasterDrag, 0),
           cond(
-            or(clockRunning(this.masterClock), not(wasRun), this.isManuallySetValue),
+            or(
+              clockRunning(this.masterClock),
+              not(wasRun),
+              this.isManuallySetValue
+            ),
             [
               cond(this.isManuallySetValue, stopClock(this.masterClock)),
               set(
@@ -495,15 +506,15 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
         set(config.toValue, dest),
         cond(and(wasRun, not(isManuallySet)), 0, [
           startClock(clock),
-          call([config.toValue, ...this.state.snapPoints], (v) => {
-            const [d, ...snapPoints] = v;
-            this.props.onWillSnapTo && this.props.onWillSnapTo(snapPoints.indexOf(d));
+          call([config.toValue, ...this.state.snapPoints], v => {
+            const [d, ...snapPoints] = v
+            this.props.onWillSnapTo &&
+              this.props.onWillSnapTo(snapPoints.indexOf(d))
           }),
         ]),
         cond(defined(wasRun), set(wasRun, 1)),
       ]),
       spring(clock, state, config),
-      cond(state.finished, stopClock(clock)),
       state.position,
     ]
   }
@@ -740,7 +751,7 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
   }
 
   render() {
-    const { borderRadius } = this.props
+    const { borderRadius, containerStyle } = this.props
     return (
       <React.Fragment>
         <Animated.View
@@ -752,20 +763,23 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
           onLayout={this.handleFullHeader}
         />
         <Animated.View
-          style={{
-            width: '100%',
-            position: 'absolute',
-            zIndex: 100,
-            opacity: cond(this.height, 1, 0),
-            transform: [
-              {
-                translateY: this.translateMaster,
-              },
-              {
-                translateY: sub(this.height, this.state.initSnap) as any,
-              },
-            ],
-          }}
+          style={[
+            {
+              width: '100%',
+              position: 'absolute',
+              zIndex: 100,
+              opacity: cond(this.height, 1, 0),
+              transform: [
+                {
+                  translateY: this.translateMaster,
+                },
+                {
+                  translateY: sub(this.height, this.state.initSnap) as any,
+                },
+              ],
+            },
+            containerStyle,
+          ]}
         >
           <PanGestureHandler
             enabled={
@@ -834,12 +848,9 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
             <Animated.Code
               exec={onChange(
                 this.isManuallySetValue,
-                cond(
-                  eq(clockRunning(this.masterClock), 0),
-                  [
-                    startClock(this.masterClock)
-                  ]
-                )
+                cond(eq(clockRunning(this.masterClock), 0), [
+                  startClock(this.masterClock),
+                ])
               )}
             />
             <Animated.Code
