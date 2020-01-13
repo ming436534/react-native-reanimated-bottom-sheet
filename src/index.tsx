@@ -515,6 +515,7 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
         cond(defined(wasRun), set(wasRun, 1)),
       ]),
       spring(clock, state, config),
+      cond(state.finished, stopClock(clock)),
       state.position,
     ]
   }
@@ -681,7 +682,15 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
     nativeEvent: {
       layout: { height },
     },
-  }: LayoutChangeEvent) => this.height.setValue(height)
+  }: LayoutChangeEvent) => {
+    if (Platform.OS === 'android') {
+      requestAnimationFrame(() => {
+        this.height.setValue(height)
+      });
+    } else {
+      this.height.setValue(height)
+    }
+  }
 
   private handleLayoutContent = ({
     nativeEvent: {
