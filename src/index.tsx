@@ -686,7 +686,7 @@ export default class BottomSheetBehavior extends React.Component<Props, State> {
     if (Platform.OS === 'android') {
       requestAnimationFrame(() => {
         this.height.setValue(height)
-      });
+      })
     } else {
       this.height.setValue(height)
     }
